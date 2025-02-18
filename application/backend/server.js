@@ -18,13 +18,14 @@ const db = new sqlite3.Database('./database.db', (err) => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 description TEXT,
+                category TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
     }
 });
 
-// CRUD API Routes
+
 app.get('/items', (req, res) => {
     db.all('SELECT * FROM items', [], (err, rows) => {
         if (err) {
@@ -35,16 +36,21 @@ app.get('/items', (req, res) => {
     });
 });
 
+
 app.post('/items', (req, res) => {
-    const { name, description } = req.body;
-    db.run('INSERT INTO items (name, description) VALUES (?, ?)', [name, description], function (err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+    const { name, description, category } = req.body;
+    db.run('INSERT INTO items (name, description, category) VALUES (?, ?, ?)', 
+        [name, description, category], 
+        function (err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ id: this.lastID });
         }
-        res.json({ id: this.lastID });
-    });
+    );
 });
+
 
 app.delete('/items/:id', (req, res) => {
     db.run('DELETE FROM items WHERE id = ?', req.params.id, function (err) {
