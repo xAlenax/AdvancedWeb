@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite CRUD Test</title>
+</head>
+<body>
+    <h2>Add Item</h2>
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="description" placeholder="Description">
+    <button onclick="addItem()">Add</button>
+
+    <h2>Items List</h2>
+    <ul id="itemsList"></ul>
+
+    <script>
+        const apiUrl = 'http://localhost:3000/items';
+
+        function fetchItems() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('itemsList');
+                    list.innerHTML = '';
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `${item.name} - ${item.description} <button onclick="deleteItem(${item.id})">Delete</button>`;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        function addItem() {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description })
+            }).then(() => fetchItems());
+        }
+
+        function deleteItem(id) {
+            fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                .then(() => fetchItems());
+        }
+
+        fetchItems();
+    </script>
+</body>
+</html>
