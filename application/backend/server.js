@@ -10,7 +10,7 @@ app.use(cors());
 
 const db = new sqlite3.Database('./database.db', (err) => {
     if (err) {
-        console.error(err.message);
+        console.error('Error connecting to the database:', err.message);
     } else {
         console.log('Connected to the SQLite database.');
         db.run(`
@@ -25,36 +25,49 @@ const db = new sqlite3.Database('./database.db', (err) => {
     }
 });
 
-
 app.get('/items', (req, res) => {
     db.all('SELECT * FROM items', [], (err, rows) => {
         if (err) {
+            console.error('Error fetching items:', err.message);
             res.status(500).json({ error: err.message });
             return;
         }
+
+        console.log('Fetched items:', rows);  
+
         res.json(rows);
     });
 });
 
-
 app.post('/items', (req, res) => {
     const { name, description, category } = req.body;
+    console.log('Received POST data:', req.body);
+
     db.run('INSERT INTO items (name, description, category) VALUES (?, ?, ?)', 
         [name, description, category], 
         function (err) {
             if (err) {
+                console.error('Error inserting item:', err.message);
                 res.status(500).json({ error: err.message });
                 return;
             }
-            res.json({ id: this.lastID });
+            const newItem = {
+                id: this.lastID,
+                name: name,
+                description: description,
+                category: category
+            };
+            res.json(newItem);  
         }
     );
 });
 
 
+
 app.delete('/items/:id', (req, res) => {
     db.run('DELETE FROM items WHERE id = ?', req.params.id, function (err) {
         if (err) {
+            console.error('Error deleting item:', err.message);
             res.status(500).json({ error: err.message });
             return;
         }
