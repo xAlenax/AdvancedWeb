@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Form } from 'react-bootstrap';
+import { Container, Row, Col, Button, Form, Spinner } from 'react-bootstrap';
 
 function App() {
   const [items, setItems] = useState([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
+  const [loading, setLoading] = useState(false); // Added loading state
   
   const apiUrl = 'http://localhost:3000/items';
 
   const fetchItems = () => {
+    setLoading(true);  // Start loading state
     fetch(apiUrl)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json(); 
-      })
+      .then(response => response.json())
       .then(data => {
         console.log('Fetched items:', data);  
-        setItems(data);  
+        setItems(data);  // Update state with fetched items
+        setLoading(false);  // Stop loading state
       })
       .catch(error => {
         console.error('Error fetching items:', error);
+        setLoading(false);  // Stop loading state on error
       });
   };
 
@@ -31,14 +30,16 @@ function App() {
 
     const newItem = { name, description, category };
 
+    // Posting the new item to the backend
     fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newItem),
     })
       .then(response => response.json())
-      .then(() => {
-        fetchItems(); 
+      .then((data) => {
+        console.log('Added new item:', data);
+        setItems((prevItems) => [...prevItems, data]); // Directly add the new item to the state
         setName('');  
         setDescription('');
         setCategory('');
@@ -48,18 +49,18 @@ function App() {
 
   const deleteItem = (id) => {
     fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
-      .then(() => fetchItems()) 
+      .then(() => fetchItems())  // Refresh the items after deletion
       .catch(error => console.error('Error deleting item:', error));
   };
 
   useEffect(() => {
-    fetchItems();
+    fetchItems();  // Fetch items when the component mounts
   }, []);
 
   return (
     <Container>
       <h1>Item Manager</h1>
-      
+
       <Row className="mb-4">
         <Col>
           <Form onSubmit={addItem}>
@@ -98,22 +99,26 @@ function App() {
       </Row>
 
       <h3>Items List</h3>
-      <Row>
-        {items.map((item) => (
-          <Col key={item.id} sm={12} md={6} lg={4} className="mb-3">
-            <div className="card">
-              <div className="card-body">
-                <h5 className="card-title">{item.name}</h5>
-                <p className="card-text">{item.description}</p>
-                <p className="card-text"><strong>Category:</strong> {item.category}</p>
-                <Button variant="danger" onClick={() => deleteItem(item.id)}>
-                  Delete
-                </Button>
+      {loading ? (
+        <Spinner animation="border" variant="primary" />  // Show a spinner while loading
+      ) : (
+        <Row>
+          {items.map((item) => (
+            <Col key={item.id} sm={12} md={6} lg={4} className="mb-3">
+              <div className="card">
+                <div className="card-body">
+                  <h5 className="card-title">{item.name}</h5>
+                  <p className="card-text">{item.description}</p>
+                  <p className="card-text"><strong>Category:</strong> {item.category}</p>
+                  <Button variant="danger" onClick={() => deleteItem(item.id)}>
+                    Delete
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Col>
-        ))}
-      </Row>
+            </Col>
+          ))}
+        </Row>
+      )}
     </Container>
   );
 }

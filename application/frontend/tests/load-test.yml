@@ -1,0 +1,18 @@
+config:
+  target: 'http://localhost:3001'  # Your frontend URL
+  phases:
+    - duration: 60    # Test will run for 60 seconds
+      arrivalRate: 5  # 5 new virtual users per second
+
+scenarios:
+  - flow:
+      - get:
+          url: '/'   # Home page, you can replace with the API URL if needed
+      - post:
+          url: '/items'   # The API endpoint for adding an item
+          json:
+            name: "Test Item"
+            description: "Test Description"
+            category: "Test Category"
+      - get:
+          url: '/items'   # Endpoint to check if items are added
